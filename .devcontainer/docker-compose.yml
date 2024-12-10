@@ -1,0 +1,14 @@
+version: '3'
+services:
+  devcontainer:
+    image: mcr.microsoft.com/devcontainers/go:1-1.23-bookworm
+    volumes:
+      - ../..:/workspaces:cached
+    command: sleep infinity
+  mysql:
+    image: 'mysql:8.4'
+    environment:
+      - 'MYSQL_DATABASE=chat_db'
+      - 'MYSQL_ROOT_PASSWORD=verysecret'
+      - 'MYSQL_USER=myuser'
+      - 'MYSQL_PASSWORD=secret'
