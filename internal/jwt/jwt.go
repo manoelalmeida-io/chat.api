@@ -32,8 +32,6 @@ func KeyFunc(token *jwt.Token) (interface{}, error) {
 		return nil, err
 	}
 
-	fmt.Println(keys)
-
 	kid, ok := token.Header["kid"].(string)
 	if !ok {
 		return nil, errors.New("kid não encontrado no cabeçalho do token")
