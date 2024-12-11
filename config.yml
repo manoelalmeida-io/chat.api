@@ -1,0 +1,6 @@
+mysql:
+  host: ${MYSQL_HOST:mysql}
+  port: ${MYSQL_PORT:3306}
+  user: ${MYSQL_USER:myuser}
+  password: ${MYSQL_PASSWORD:secret}
+  database: ${MYSQL_DATABASE:chat_db}
