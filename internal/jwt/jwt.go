@@ -49,7 +49,6 @@ func fetchGooglePublicKey() (map[string]*rsa.PublicKey, error) {
 	const googleCertsUrl = "https://www.googleapis.com/oauth2/v3/certs"
 
 	resp, err := http.Get(googleCertsUrl)
-
 	if err != nil {
 		return nil, err
 	}
