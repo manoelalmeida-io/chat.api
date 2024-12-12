@@ -25,6 +25,23 @@ func (r *UserRepository) FindById(id int64) (*model.User, error) {
 	return &user, nil
 }
 
+func (r *UserRepository) FindByEmail(email string) (*model.User, error) {
+	row := r.db.QueryRow("SELECT * FROM user WHERE email = ?", email)
+
+	var user model.User
+
+	err := row.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.GoogleSub)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 func (r *UserRepository) FindBySub(sub string) (*model.User, error) {
 	row := r.db.QueryRow("SELECT * FROM user WHERE google_sub = ?", sub)
 

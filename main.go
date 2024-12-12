@@ -53,18 +53,28 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	e.Use(echojwt.WithConfig(echojwt.Config{
-		KeyFunc:       jwt.KeyFunc,
-		SigningMethod: "RS256",
-		TokenLookup:   "header:Authorization:Bearer ",
-	}))
-
 	db := persistence.CreateConnection()
 
 	userRepository := repository.NewUserRepository(db)
-	userHandler := handler.NewUserHandler(userRepository)
+	userContactRepository := repository.NewUserContactRepository(db)
+
+	userTokenConverter := jwt.NewUserTokenConverter(userRepository)
+
+	e.Use(echojwt.WithConfig(echojwt.Config{
+		KeyFunc:        jwt.KeyFunc,
+		SigningMethod:  "RS256",
+		TokenLookup:    "header:Authorization:Bearer ",
+		SuccessHandler: userTokenConverter.SuccessHandler,
+	}))
+
+	userHandler := handler.NewUserHandler(userRepository, userContactRepository)
 
 	e.POST("/users/sign-in", userHandler.SignInHandler)
+	e.GET("/users/contacts", userHandler.FindContactsByUserHandler)
+	e.POST("/users/contacts", userHandler.AddContactHandler)
+	e.GET("/users/contacts/:id", userHandler.GetContactByIdHandler)
+	e.PUT("/users/contacts/:id", userHandler.UpdateContactHandler)
+	e.DELETE("/users/contacts/:id", userHandler.DeleteContactHandler)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"chat_api/internal/repository"
 	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
@@ -10,6 +11,7 @@ import (
 	"net/http"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/labstack/echo/v4"
 )
 
 type GoogleCerts struct {
@@ -18,6 +20,29 @@ type GoogleCerts struct {
 		N   string `json:"n"`
 		E   string `json:"e"`
 	} `json:"keys"`
+}
+
+type UserTokenConverter struct {
+	userRepository *repository.UserRepository
+}
+
+func NewUserTokenConverter(userRepository *repository.UserRepository) *UserTokenConverter {
+	return &UserTokenConverter{userRepository: userRepository}
+}
+
+func (u *UserTokenConverter) SuccessHandler(c echo.Context) {
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+
+	email := claims["email"].(string)
+
+	validUser, err := u.userRepository.FindByEmail(email)
+	if err != nil {
+		c.Response().WriteHeader(http.StatusUnauthorized)
+		c.Response().Flush()
+	}
+
+	c.Set("userInfo", validUser)
 }
 
 func KeyFunc(token *jwt.Token) (interface{}, error) {
