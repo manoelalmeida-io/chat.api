@@ -30,19 +30,31 @@ func NewUserTokenConverter(userRepository *repository.UserRepository) *UserToken
 	return &UserTokenConverter{userRepository: userRepository}
 }
 
-func (u *UserTokenConverter) SuccessHandler(c echo.Context) {
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
+func (u *UserTokenConverter) UserTokenConverterMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		if c.Path() == "/users/sign-in" {
+			return next(c)
+		}
 
-	email := claims["email"].(string)
+		user := c.Get("user").(*jwt.Token)
+		claims := user.Claims.(jwt.MapClaims)
 
-	validUser, err := u.userRepository.FindByEmail(email)
-	if err != nil {
-		c.Response().WriteHeader(http.StatusUnauthorized)
-		c.Response().Flush()
+		email := claims["email"].(string)
+
+		validUser, err := u.userRepository.FindByEmail(email)
+
+		if err != nil {
+			c.JSON(http.StatusForbidden, map[string]string{
+				"message": "User does not exist",
+			})
+			c.Response().WriteHeader(http.StatusForbidden)
+			c.Response().Flush()
+			return err
+		}
+
+		c.Set("userInfo", validUser)
+		return next(c)
 	}
-
-	c.Set("userInfo", validUser)
 }
 
 func KeyFunc(token *jwt.Token) (interface{}, error) {

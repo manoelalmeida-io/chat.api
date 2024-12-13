@@ -61,11 +61,12 @@ func main() {
 	userTokenConverter := jwt.NewUserTokenConverter(userRepository)
 
 	e.Use(echojwt.WithConfig(echojwt.Config{
-		KeyFunc:        jwt.KeyFunc,
-		SigningMethod:  "RS256",
-		TokenLookup:    "header:Authorization:Bearer ",
-		SuccessHandler: userTokenConverter.SuccessHandler,
+		KeyFunc:       jwt.KeyFunc,
+		SigningMethod: "RS256",
+		TokenLookup:   "header:Authorization:Bearer ",
+		// SuccessHandler: userTokenConverter.SuccessHandler,
 	}))
+	e.Use(userTokenConverter.UserTokenConverterMiddleware)
 
 	userHandler := handler.NewUserHandler(userRepository, userContactRepository)
 
