@@ -20,6 +20,12 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 # Start a new stage from scratch
 FROM debian:bullseye-slim
 
+# Install necessary packages
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    update-ca-certificates
+
 # Copy the Pre-built binary file from the previous stage
 COPY --from=builder /app/main /app/main
 COPY --from=builder /app/config.yml /app/config.yml
