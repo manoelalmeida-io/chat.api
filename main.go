@@ -71,7 +71,6 @@ func main() {
 		KeyFunc:       jwt.KeyFunc,
 		SigningMethod: "RS256",
 		TokenLookup:   "header:Authorization:Bearer ",
-		// SuccessHandler: userTokenConverter.SuccessHandler,
 	}))
 	e.Use(userTokenConverter.UserTokenConverterMiddleware)
 
