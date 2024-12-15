@@ -53,6 +53,13 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
+	fmt.Println(viper.GetString("client-base-url"))
+
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{viper.GetString("client-base-url")},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
+	}))
+
 	db := persistence.CreateConnection()
 
 	userRepository := repository.NewUserRepository(db)
