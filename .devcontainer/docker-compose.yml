@@ -12,3 +12,8 @@ services:
       - 'MYSQL_ROOT_PASSWORD=verysecret'
       - 'MYSQL_USER=myuser'
       - 'MYSQL_PASSWORD=secret'
+  mongodb:
+    image: 'mongo:6.0'
+    environment:
+      - 'MONGO_INITDB_ROOT_USERNAME=admin'
+      - 'MONGO_INITDB_ROOT_PASSWORD=secret'

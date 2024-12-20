@@ -5,4 +5,10 @@ mysql:
   password: ${MYSQL_PASSWORD:secret}
   database: ${MYSQL_DATABASE:chat_db}
 
+mongodb:
+  host: ${MONGODB_HOST:mongodb}
+  user: ${MONGODB_USER:admin}
+  password: ${MONGODB_PASSWORD:secret}
+  database: ${MONGODB_DATABASE:chat_db}
+
 client-base-url: ${CLIENT_BASE_URL:http://localhost:3000}
