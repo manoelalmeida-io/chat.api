@@ -11,4 +11,9 @@ mongodb:
   password: ${MONGODB_PASSWORD:secret}
   database: ${MONGODB_DATABASE:chat_db}
 
+rabbitmq:
+  host: ${RABBITMQ_HOST:rabbitmq}
+  user: ${RABBITMQ_USER:myuser}
+  password: ${RABBITMQ_PASSWORD:secret}
+
 client-base-url: ${CLIENT_BASE_URL:http://localhost:3000}

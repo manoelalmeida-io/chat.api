@@ -1,7 +1,9 @@
 package main
 
 import (
+	"chat_api/internal/amqp"
 	"chat_api/internal/configuration"
+	"chat_api/internal/event"
 	"chat_api/internal/handler"
 	"chat_api/internal/jwt"
 	"chat_api/internal/persistence"
@@ -61,6 +63,7 @@ func main() {
 	}))
 
 	db := persistence.CreateConnection()
+	amqpChannel := amqp.CreateConnectionRabbitmq()
 
 	userRepository := repository.NewUserRepository(db)
 	userContactRepository := repository.NewUserContactRepository(db)
@@ -74,7 +77,41 @@ func main() {
 	}))
 	e.Use(userTokenConverter.UserTokenConverterMiddleware)
 
+	eventPublisher := event.NewEventPublisher(amqpChannel)
+
+	q, err := amqpChannel.QueueDeclare(
+		"chat.message.sent.queue", // name
+		false,                     // durable
+		false,                     // delete when unused
+		false,                     // exclusive
+		false,                     // no-wait
+		nil,                       // arguments
+	)
+	if err != nil {
+		log.Fatal("failed to declare queue", err)
+	}
+
+	msgs, err := amqpChannel.Consume(
+		q.Name, // queue
+		"",     // consumer
+		true,   // auto-ack
+		false,  // exclusive
+		false,  // no-local
+		false,  // no-wait
+		nil,    // args
+	)
+	if err != nil {
+		log.Fatal("failed to register consumer", err)
+	}
+
+	go func() {
+		for d := range msgs {
+			log.Printf("Received a message: %s", d.Body)
+		}
+	}()
+
 	userHandler := handler.NewUserHandler(userRepository, userContactRepository)
+	chatHandler := handler.NewChatHandler(eventPublisher)
 
 	e.POST("/users/sign-in", userHandler.SignInHandler)
 	e.GET("/users/contacts", userHandler.FindContactsByUserHandler)
@@ -82,6 +119,8 @@ func main() {
 	e.GET("/users/contacts/:id", userHandler.GetContactByIdHandler)
 	e.PUT("/users/contacts/:id", userHandler.UpdateContactHandler)
 	e.DELETE("/users/contacts/:id", userHandler.DeleteContactHandler)
+
+	e.POST("/chats/send", chatHandler.SendMessageHandler)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }
