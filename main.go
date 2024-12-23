@@ -67,6 +67,8 @@ func main() {
 
 	userRepository := repository.NewUserRepository(db)
 	userContactRepository := repository.NewUserContactRepository(db)
+	chatRepository := repository.NewChatRepository(db)
+	chatMessageRepository := repository.NewChatMessageRepository(db)
 
 	userTokenConverter := jwt.NewUserTokenConverter(userRepository)
 
@@ -78,6 +80,7 @@ func main() {
 	e.Use(userTokenConverter.UserTokenConverterMiddleware)
 
 	eventPublisher := event.NewEventPublisher(amqpChannel)
+	eventConsumer := event.NewEventConsumer(chatRepository, chatMessageRepository)
 
 	q, err := amqpChannel.QueueDeclare(
 		"chat.message.sent.queue", // name
@@ -106,12 +109,12 @@ func main() {
 
 	go func() {
 		for d := range msgs {
-			log.Printf("Received a message: %s", d.Body)
+			eventConsumer.ReceiveMessageSent(d)
 		}
 	}()
 
 	userHandler := handler.NewUserHandler(userRepository, userContactRepository)
-	chatHandler := handler.NewChatHandler(eventPublisher)
+	chatHandler := handler.NewChatHandler(eventPublisher, userRepository)
 
 	e.POST("/users/sign-in", userHandler.SignInHandler)
 	e.GET("/users/contacts", userHandler.FindContactsByUserHandler)

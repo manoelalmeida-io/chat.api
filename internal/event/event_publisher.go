@@ -3,6 +3,7 @@ package event
 import (
 	"chat_api/internal/model"
 	"context"
+	"encoding/json"
 	"log"
 	"time"
 
@@ -33,14 +34,19 @@ func (p *EventPublisher) SendMessage(command model.SendMessageCommand) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	commandJson, err := json.Marshal(command)
+	if err != nil {
+		log.Fatal("failed to marshal command to JSON", err)
+	}
+
 	err = p.amqpChannel.PublishWithContext(ctx,
 		"",     // exchange
 		q.Name, // routing key
 		false,  // mandatory
 		false,  // immediate
 		amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        []byte("Event published"),
+			ContentType: "application/json",
+			Body:        commandJson,
 		})
 	if err != nil {
 		log.Print("error publishing message to queue", err)
