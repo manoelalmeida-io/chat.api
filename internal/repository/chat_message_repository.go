@@ -25,6 +25,35 @@ func (r *ChatMessageRepository) FindById(id string) (*model.ChatMessage, error) 
 	return &message, nil
 }
 
+func (r *ChatMessageRepository) FindByChatIdAndUserId(chatId string, userId int64) ([]model.ChatMessage, error) {
+	messages := make([]model.ChatMessage, 0)
+
+	rows, err := r.db.Query(
+		"SELECT cm.* FROM chat_message cm INNER JOIN chat c ON cm.chat_id = c.id WHERE cm.chat_id = ? and c.user_id = ?", chatId, userId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var message model.ChatMessage
+
+		if err := rows.Scan(&message.Id, &message.Content, &message.UserRef, &message.DeliveryType, &message.ChatId); err != nil {
+			return nil, err
+		}
+
+		messages = append(messages, message)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return messages, nil
+}
+
 func (r *ChatMessageRepository) Save(message *model.ChatMessage) (*model.ChatMessage, error) {
 	var err error
 

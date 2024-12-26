@@ -114,7 +114,7 @@ func main() {
 	}()
 
 	userHandler := handler.NewUserHandler(userRepository, userContactRepository)
-	chatHandler := handler.NewChatHandler(eventPublisher, userRepository)
+	chatHandler := handler.NewChatHandler(eventPublisher, userRepository, chatRepository, chatMessageRepository)
 
 	e.POST("/users/sign-in", userHandler.SignInHandler)
 	e.GET("/users/contacts", userHandler.FindContactsByUserHandler)
@@ -123,6 +123,8 @@ func main() {
 	e.PUT("/users/contacts/:id", userHandler.UpdateContactHandler)
 	e.DELETE("/users/contacts/:id", userHandler.DeleteContactHandler)
 
+	e.GET("/chats", chatHandler.FindChatsHandler)
+	e.GET("/chats/:id/messages", chatHandler.ChatMessagesHandler)
 	e.POST("/chats/send", chatHandler.SendMessageHandler)
 
 	e.Logger.Fatal(e.Start(":8080"))

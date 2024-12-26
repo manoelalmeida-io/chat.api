@@ -11,12 +11,43 @@ import (
 )
 
 type ChatHandler struct {
-	eventPublisher *event.EventPublisher
-	userRepository *repository.UserRepository
+	eventPublisher        *event.EventPublisher
+	userRepository        *repository.UserRepository
+	chatRepository        *repository.ChatRepository
+	chatMessageRepository *repository.ChatMessageRepository
 }
 
-func NewChatHandler(eventPublisher *event.EventPublisher, userRepository *repository.UserRepository) *ChatHandler {
-	return &ChatHandler{eventPublisher, userRepository}
+func NewChatHandler(
+	eventPublisher *event.EventPublisher,
+	userRepository *repository.UserRepository,
+	chatRepository *repository.ChatRepository,
+	chatMessageRepository *repository.ChatMessageRepository,
+) *ChatHandler {
+	return &ChatHandler{eventPublisher, userRepository, chatRepository, chatMessageRepository}
+}
+
+func (h *ChatHandler) FindChatsHandler(c echo.Context) error {
+	userInfo := c.Get("userInfo").(*model.User)
+
+	chats, err := h.chatRepository.FindByUserId(userInfo.Id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, chats)
+}
+
+func (h *ChatHandler) ChatMessagesHandler(c echo.Context) error {
+	chatId := c.Param("id")
+	userInfo := c.Get("userInfo").(*model.User)
+
+	messages, err := h.chatMessageRepository.FindByChatIdAndUserId(chatId, userInfo.Id)
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, messages)
 }
 
 func (h *ChatHandler) SendMessageHandler(c echo.Context) error {

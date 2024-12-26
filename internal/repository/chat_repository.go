@@ -25,6 +25,33 @@ func (r *ChatRepository) FindById(id string) (*model.Chat, error) {
 	return &chat, nil
 }
 
+func (r *ChatRepository) FindByUserId(userId int64) ([]model.Chat, error) {
+	chats := make([]model.Chat, 0)
+
+	rows, err := r.db.Query("SELECT * FROM chat WHERE user_id = ?", userId)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var chat model.Chat
+
+		if err := rows.Scan(&chat.Id, &chat.UserRef, &chat.UserId); err != nil {
+			return nil, err
+		}
+
+		chats = append(chats, chat)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return chats, nil
+}
+
 func (r *ChatRepository) FindByUserRefAndUserId(userRef string, userId int64) (*model.Chat, error) {
 	row := r.db.QueryRow("SELECT * FROM chat WHERE user_ref = ? AND user_id = ?", userRef, userId)
 
