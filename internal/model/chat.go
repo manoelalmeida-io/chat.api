@@ -26,3 +26,7 @@ type SendMessageCommand struct {
 	FromUserId int64  `json:"fromUserId"`
 	ToUserId   int64  `json:"toUserId"`
 }
+
+type CreateChatRequest struct {
+	UserRef string `json:"userRef"`
+}

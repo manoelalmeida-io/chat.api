@@ -4,6 +4,7 @@ import (
 	"chat_api/internal/event"
 	"chat_api/internal/model"
 	"chat_api/internal/repository"
+	"chat_api/internal/utils"
 	"database/sql"
 	"net/http"
 
@@ -48,6 +49,38 @@ func (h *ChatHandler) ChatMessagesHandler(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, messages)
+}
+
+func (h *ChatHandler) CreateOrRetrieveChatHandler(c echo.Context) error {
+	userInfo := c.Get("userInfo").(*model.User)
+
+	request := new(model.CreateChatRequest)
+	if err := c.Bind(request); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	chat, err := h.chatRepository.FindByUserRefAndUserId(request.UserRef, userInfo.Id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	if chat == nil {
+		id, err := utils.GetSnowflakeInstance().GenerateId()
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+
+		newChat := model.Chat{Id: id, UserRef: request.UserRef, UserId: userInfo.Id}
+		createdChat, err := h.chatRepository.Save(newChat)
+
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+
+		return c.JSON(http.StatusCreated, createdChat)
+	}
+
+	return c.JSON(http.StatusOK, chat)
 }
 
 func (h *ChatHandler) SendMessageHandler(c echo.Context) error {

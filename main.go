@@ -124,8 +124,9 @@ func main() {
 	e.DELETE("/users/contacts/:id", userHandler.DeleteContactHandler)
 
 	e.GET("/chats", chatHandler.FindChatsHandler)
-	e.GET("/chats/:id/messages", chatHandler.ChatMessagesHandler)
+	e.POST("/chats", chatHandler.CreateOrRetrieveChatHandler)
 	e.POST("/chats/send", chatHandler.SendMessageHandler)
+	e.GET("/chats/:id/messages", chatHandler.ChatMessagesHandler)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }
