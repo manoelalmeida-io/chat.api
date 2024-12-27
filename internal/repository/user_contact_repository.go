@@ -56,7 +56,7 @@ func (r *UserContactRepository) Save(userContact model.UserContact) (*model.User
 	var res sql.Result
 	var err error
 
-	if *userContact.Id != 0 {
+	if userContact.Id != nil {
 		res, err = r.db.Exec(
 			"UPDATE user_contact SET first_name = ?, last_name = ?, email = ?, user_id = ? WHERE id = ?",
 			userContact.FirstName, userContact.LastName, userContact.Email, userContact.UserId, userContact.Id)
@@ -70,7 +70,7 @@ func (r *UserContactRepository) Save(userContact model.UserContact) (*model.User
 		return nil, err
 	}
 
-	if *userContact.Id != 0 {
+	if userContact.Id != nil {
 		return r.FindById(*userContact.Id)
 	}
 
