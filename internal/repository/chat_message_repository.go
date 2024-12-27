@@ -29,7 +29,7 @@ func (r *ChatMessageRepository) FindByChatIdAndUserId(chatId string, userId int6
 	messages := make([]model.ChatMessage, 0)
 
 	rows, err := r.db.Query(
-		"SELECT cm.* FROM chat_message cm INNER JOIN chat c ON cm.chat_id = c.id WHERE cm.chat_id = ? and c.user_id = ?", chatId, userId)
+		"SELECT cm.* FROM chat_message cm INNER JOIN chat c ON cm.chat_id = c.id WHERE cm.chat_id = ? and c.user_id = ? ORDER BY id DESC", chatId, userId)
 
 	if err != nil {
 		return nil, err
