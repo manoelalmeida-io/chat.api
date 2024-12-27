@@ -1,9 +1,10 @@
 package model
 
 type Chat struct {
-	Id      string `json:"id"`
-	UserRef string `json:"userRef"`
-	UserId  int64  `json:"userId"`
+	Id      string       `json:"id"`
+	UserRef string       `json:"userRef"`
+	UserId  int64        `json:"userId"`
+	Contact *UserContact `json:"contact"`
 }
 
 type ChatMessage struct {

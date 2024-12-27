@@ -63,7 +63,7 @@ func (h *UserHandler) AddContactHandler(c echo.Context) error {
 	user := c.Get("userInfo").(*model.User)
 	userContact := new(model.UserContact)
 
-	userContact.UserId = user.Id
+	userContact.UserId = &user.Id
 
 	if err := c.Bind(userContact); err != nil {
 		return err
