@@ -6,6 +6,7 @@ import (
 	"chat_api/internal/event"
 	"chat_api/internal/handler"
 	"chat_api/internal/jwt"
+	"chat_api/internal/model"
 	"chat_api/internal/persistence"
 	"chat_api/internal/repository"
 	"fmt"
@@ -76,11 +77,25 @@ func main() {
 		KeyFunc:       jwt.KeyFunc,
 		SigningMethod: "RS256",
 		TokenLookup:   "header:Authorization:Bearer ",
+		Skipper: func(c echo.Context) bool {
+			return c.Request().URL.Path == "/ws"
+		},
 	}))
+	e.Use(echojwt.WithConfig(echojwt.Config{
+		KeyFunc:       jwt.KeyFunc,
+		SigningMethod: "RS256",
+		TokenLookup:   "query:id:",
+		Skipper: func(c echo.Context) bool {
+			return c.Request().URL.Path != "/ws"
+		},
+	}))
+
 	e.Use(userTokenConverter.UserTokenConverterMiddleware)
 
+	broadcast := make(chan model.ChatMessage)
+
 	eventPublisher := event.NewEventPublisher(amqpChannel)
-	eventConsumer := event.NewEventConsumer(chatRepository, chatMessageRepository)
+	eventConsumer := event.NewEventConsumer(chatRepository, chatMessageRepository, &broadcast)
 
 	q, err := amqpChannel.QueueDeclare(
 		"chat.message.sent.queue", // name
@@ -115,6 +130,7 @@ func main() {
 
 	userHandler := handler.NewUserHandler(userRepository, userContactRepository)
 	chatHandler := handler.NewChatHandler(eventPublisher, userRepository, chatRepository, chatMessageRepository)
+	websocketHandler := handler.NewWebSocketHandler(broadcast)
 
 	e.POST("/users/sign-in", userHandler.SignInHandler)
 	e.GET("/users/contacts", userHandler.FindContactsByUserHandler)
@@ -127,6 +143,10 @@ func main() {
 	e.POST("/chats", chatHandler.CreateOrRetrieveChatHandler)
 	e.POST("/chats/send", chatHandler.SendMessageHandler)
 	e.GET("/chats/:id/messages", chatHandler.ChatMessagesHandler)
+
+	e.GET("/ws", websocketHandler.Connect)
+
+	go websocketHandler.HandleMessages()
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

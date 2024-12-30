@@ -13,10 +13,15 @@ import (
 type EventConsumer struct {
 	chatRepository        *repository.ChatRepository
 	chatMessageRepository *repository.ChatMessageRepository
+	broadcast             *chan model.ChatMessage
 }
 
-func NewEventConsumer(chatRepository *repository.ChatRepository, chatMessageRepository *repository.ChatMessageRepository) *EventConsumer {
-	return &EventConsumer{chatRepository, chatMessageRepository}
+func NewEventConsumer(
+	chatRepository *repository.ChatRepository,
+	chatMessageRepository *repository.ChatMessageRepository,
+	broadcast *chan model.ChatMessage,
+) *EventConsumer {
+	return &EventConsumer{chatRepository, chatMessageRepository, broadcast}
 }
 
 func (e *EventConsumer) ReceiveMessageSent(d amqp091.Delivery) {
@@ -91,6 +96,8 @@ func (e *EventConsumer) registerMessageReceived(command model.SendMessageCommand
 
 	message := &model.ChatMessage{Id: id, Content: command.Message, UserRef: command.From, DeliveryType: "RECEIVED", ChatId: chatId}
 	e.chatMessageRepository.Save(message)
+
+	*e.broadcast <- *message
 
 	return nil
 }
